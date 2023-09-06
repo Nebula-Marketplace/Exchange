@@ -50,14 +50,14 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::List { id, price, expires } => execute::list(deps, id, price, expires, info.sender),
         ExecuteMsg::Buy { id } => execute::buy(deps, id, &info),
-        ExecuteMsg::DeList { id } => execute::delist(deps, id, &info, _env),
+        ExecuteMsg::DeList { id } => execute::delist(deps, id, &info, env),
     }
 }
 
