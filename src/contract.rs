@@ -2,12 +2,12 @@ use std::vec;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Addr};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Addr, BankMsg};
 use cw2::set_contract_version;
 use cosmwasm_std::WasmMsg::Execute as MsgExecuteContract;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, GetMetadataResponse, InstantiateMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, GetMetadataResponse, InstantiateMsg, QueryMsg, Tmessage, SendTokenMsg};
 use crate::state::{State, STATE, Token};
 
 use chrono::Utc;
@@ -62,13 +62,18 @@ pub fn execute(
 }
 
 pub mod execute {
-    use cosmwasm_std::Uint128;
+    use cosmwasm_std::{Uint128, coins, WasmMsg};
 
     use crate::msg::{Rmessage, Revoke};
     #[allow(unused_imports)]
     use crate::state;
 
     use super::*;
+
+    pub enum Messages {
+        Execute(WasmMsg),
+        Bank(BankMsg)
+    }
 
     pub fn list(deps: DepsMut, id: String, price: Uint128, expires: i64, owner: Addr) -> Result<Response, ContractError> {
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
@@ -88,6 +93,7 @@ pub mod execute {
     pub fn buy(deps: DepsMut, id: String, info: &MessageInfo) -> Result<Response, ContractError> {
         let s = STATE.load(deps.storage)?;
         let mut listed = s.listed;
+        let addresss = &s.contract;
 
         for (i, token) in listed.iter_mut().enumerate() {
             if token.expires <= Utc::now().timestamp() {
@@ -106,27 +112,27 @@ pub mod execute {
 
                     // create vec of messages; bankMsgSend to creators, bankMsgSend to fee wallet, bankMsgSend to owner, and send_token to buyer
 
-                    // let messages = s.royalties.creators.iter().map(|creator| {
-                    //     let creator_addr = Addr::unchecked(creator.address);
-                    //     let creator_payment = token.price * Uint128::from(creator.share / 10_000);
-                    //     let creator_msg = BankMsg::Send {    
-                    //         to_address: creator_addr.into(), 
-                    //         amount: coins(creator_payment, "inj"),
-                    //     };
-                    //     creator_msg
-                    // });
+                    let mut messages: Vec<Messages> = s.royalties.creators.iter().map(|creator| {
+                        let creator_addr = Addr::unchecked(&creator.address);
+                        let creator_payment = u128::from(token.price) * u128::from(Uint128::from((creator.share as i16 / 10_000) as u8));
+                        let creator_msg = BankMsg::Send {    
+                            to_address: creator_addr.into(), 
+                            amount: coins(creator_payment, "inj"),
+                        };
+                        Messages::Bank(creator_msg)
+                    }).rev().collect();
 
-                    // messages.append(BankMsg::Send {  
-                    //     to_address: fee_wallet.into(),
-                    //     amount: coins(fee, "inj"),
-                    // });
+                    messages.append(&mut vec![Messages::Bank(BankMsg::Send {  
+                        to_address: "".into(),
+                        amount: coins(u128::from(token.price) * 0.02 as u128, "inj"),
+                    })]);
 
-                    // messages.append(MsgExecuteContract {
-                    //    sender: "inj1f4psdn7c7ap3aruu5zpex5p9a05k8qd077736v".into(),
-                    //    contract: s.contract.into(),
-                    //    msg: to_binary(&SendNFT { transfer_nft: SendTokenMsg { recipient: info.sender.to_string(), token_id: token.id.to_string() } }),
-                    //    funds: 0,
-                    // });
+                    // Need a way to add WasmMsg 
+                    messages.append(&mut vec![Messages::Execute(MsgExecuteContract {
+                       contract_addr: addresss.into(),
+                       msg: to_binary(& Tmessage { transfer_nft: SendTokenMsg { recipient: info.sender.to_string(), token_id: token.id.to_string() } }).unwrap(),
+                       funds: vec![],
+                    })]);
 
                     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
                         state.listed.remove(i);
