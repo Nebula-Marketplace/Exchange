@@ -194,6 +194,7 @@ pub mod execute {
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetMetadata {} => to_binary(&query::get_metadata(deps)?),
+        QueryMsg::GetListed {} => to_binary(&query::get_listed(deps)?),
         _ => panic!("Unsupported query"),
     }
 }
@@ -212,5 +213,11 @@ pub mod query {
             supply: state.supply,
         })
     }
+
+    pub fn get_listed(deps: Deps) -> StdResult<Vec<Token>> {
+        let state = STATE.load(deps.storage)?;
+        Ok(state.listed)
+    }
+
 }
 
