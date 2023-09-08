@@ -10,7 +10,6 @@ use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, GetMetadataResponse, InstantiateMsg, QueryMsg, Tmessage, SendTokenMsg};
 use crate::state::{State, STATE, Token};
 
-use chrono::Utc;
 use crate::msg::Royalties;
 
 // version info for migration info
@@ -56,7 +55,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::List { id, price, expires } => execute::list(deps, id, price, expires, info.sender),
-        ExecuteMsg::Buy { id } => execute::buy(deps, id, &info),
+        ExecuteMsg::Buy { id } => execute::buy(deps, id, &info, env),
         ExecuteMsg::DeList { id } => execute::delist(deps, id, &info, env),
     }
 }
@@ -90,13 +89,13 @@ pub mod execute {
         Ok(Response::new().add_attribute("action", "increment"))
     }
 
-    pub fn buy(deps: DepsMut, id: String, info: &MessageInfo) -> Result<Response, ContractError> {
+    pub fn buy(deps: DepsMut, id: String, info: &MessageInfo, env: Env) -> Result<Response, ContractError> {
         let s = STATE.load(deps.storage)?;
         let mut listed = s.listed;
         let addresss = &s.contract;
 
         for (i, token) in listed.iter_mut().enumerate() {
-            if token.expires <= Utc::now().timestamp() {
+            if token.expires as u64 <= env.block.time.seconds() {
                 STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
                     state.listed.remove(i);
                     Ok(state)
