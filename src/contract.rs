@@ -95,7 +95,7 @@ pub mod execute {
         let addresss = &s.contract;
 
         for (i, token) in listed.iter_mut().enumerate() {
-            if token.expires as u64 <= env.block.time.seconds() {
+            if token.expires <= env.block.time.seconds() as i64 {
                 STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
                     state.listed.remove(i);
                     Ok(state)
