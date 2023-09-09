@@ -94,14 +94,17 @@ pub mod execute {
         let mut listed = s.listed;
         let addresss = &s.contract;
 
+        let mut bank_messages: Vec<BankMsg> = vec![];
+        let mut token_message: Vec<WasmMsg> = vec![];
+
         for (i, token) in listed.iter_mut().enumerate() {
-            if token.expires <= env.block.time.seconds() as i64 {
-                STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-                    state.listed.remove(i);
-                    Ok(state)
-                })?;
-            }
-            else if token.id == id {
+            // if token.expires <= env.block.time.seconds() as i64 {
+            //     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
+            //         state.listed.remove(i);
+            //         Ok(state)
+            //     })?;
+            // }
+            if token.id == id {
                 let payment: Uint128 = cw_utils::must_pay(info, "inj").unwrap();
                 if token.price > payment { // need to rework this to include platform fee and royalties
                     return Err(ContractError::InsufficientFunds {});
@@ -111,27 +114,27 @@ pub mod execute {
 
                     // create vec of messages; bankMsgSend to creators, bankMsgSend to fee wallet, bankMsgSend to owner, and send_token to buyer
 
-                    let mut messages: Vec<Messages> = s.royalties.creators.iter().map(|creator| {
+                    bank_messages = s.royalties.creators.iter().map(|creator| {
                         let creator_addr = Addr::unchecked(&creator.address);
                         let creator_payment = u128::from(token.price) * u128::from(Uint128::from((creator.share as i16 / 10_000) as u8));
                         let creator_msg = BankMsg::Send {    
                             to_address: creator_addr.into(), 
                             amount: coins(creator_payment, "inj"),
                         };
-                        Messages::Bank(creator_msg)
+                        creator_msg
                     }).rev().collect();
 
-                    messages.append(&mut vec![Messages::Bank(BankMsg::Send {  
+                    bank_messages.append(&mut vec![BankMsg::Send {  
                         to_address: "".into(),
                         amount: coins(u128::from(token.price) * 0.02 as u128, "inj"),
-                    })]);
+                    }]);
 
                     // Need a way to add WasmMsg 
-                    messages.append(&mut vec![Messages::Execute(MsgExecuteContract {
+                    token_message.append(&mut vec![MsgExecuteContract {
                        contract_addr: addresss.into(),
                        msg: to_binary(& Tmessage { transfer_nft: SendTokenMsg { recipient: info.sender.to_string(), token_id: token.id.to_string() } }).unwrap(),
                        funds: vec![],
-                    })]);
+                    }]);
 
                     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
                         state.listed.remove(i);
@@ -143,7 +146,8 @@ pub mod execute {
         Ok(
             Response::new()
             .add_attribute("action", "buy")
-            // .add_messages(messages)
+            .add_messages(bank_messages)
+            .add_messages(token_message)
         )
     }
 
