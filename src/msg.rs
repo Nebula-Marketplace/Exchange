@@ -74,9 +74,6 @@ pub enum QueryMsg {
 
     #[returns(GetListedResponse)]
     GetListed {},
-
-    #[returns(NFT)]
-    GetNFT {id: String}
 }
 
 // We define a custom struct for each query response

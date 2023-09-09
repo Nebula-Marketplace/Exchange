@@ -125,7 +125,7 @@ pub mod execute {
                     }).rev().collect();
 
                     bank_messages.append(&mut vec![BankMsg::Send {  
-                        to_address: "".into(),
+                        to_address: "inj1f4psdn7c7ap3aruu5zpex5p9a05k8qd077736v".into(),
                         amount: coins(u128::from(token.price) * 0.02 as u128, "inj"),
                     }]);
 
