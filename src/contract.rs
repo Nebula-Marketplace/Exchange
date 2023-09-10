@@ -94,8 +94,7 @@ pub mod execute {
         let mut listed = s.listed;
         let addresss = &s.contract;
 
-        let mut bank_messages: Vec<BankMsg> = vec![];
-        let mut token_message: Vec<WasmMsg> = vec![];
+        let mut resp = Response::new();
 
         for (i, token) in listed.iter_mut().enumerate() {
             // if token.expires <= env.block.time.seconds() as i64 {
@@ -114,7 +113,7 @@ pub mod execute {
 
                     // create vec of messages; bankMsgSend to creators, bankMsgSend to fee wallet, bankMsgSend to owner, and send_token to buyer
 
-                    bank_messages = s.royalties.creators.iter().map(|creator| {
+                    resp = resp.add_messages(s.royalties.creators.iter().map(|creator| {
                         let creator_addr = Addr::unchecked(&creator.address);
                         let creator_payment = u128::from(token.price) * u128::from(Uint128::from((creator.share as i16 / 10_000) as u8));
                         let creator_msg = BankMsg::Send {    
@@ -122,15 +121,12 @@ pub mod execute {
                             amount: coins(creator_payment, "inj"),
                         };
                         creator_msg
-                    }).rev().collect();
-
-                    bank_messages.append(&mut vec![BankMsg::Send {  
+                    }).rev())
+                    .add_messages(vec![BankMsg::Send {  
                         to_address: "inj1f4psdn7c7ap3aruu5zpex5p9a05k8qd077736v".into(),
                         amount: coins(u128::from(token.price) * 0.02 as u128, "inj"),
-                    }]);
-
-                    // Need a way to add WasmMsg 
-                    token_message.append(&mut vec![MsgExecuteContract {
+                    }])
+                    .add_messages(vec![MsgExecuteContract {
                        contract_addr: addresss.into(),
                        msg: to_binary(& Tmessage { transfer_nft: SendTokenMsg { recipient: info.sender.to_string(), token_id: token.id.to_string() } }).unwrap(),
                        funds: vec![],
@@ -143,12 +139,7 @@ pub mod execute {
                 }
             }
         }
-        Ok(
-            Response::new()
-            .add_attribute("action", "buy")
-            .add_messages(bank_messages)
-            .add_messages(token_message)
-        )
+        Ok(resp)
     }
 
     pub fn delist(deps: DepsMut, id: String, info: &MessageInfo, _env: Env) -> Result<Response, ContractError> {
