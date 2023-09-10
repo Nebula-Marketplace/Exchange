@@ -3,5 +3,6 @@
 - [x] instantiation
 - [x] query listed NFTs
 - [x] list NFT
-- [ ] buy NFT
+- [x] buy NFT
 - [x] query NFT data (ID, uri, listed, owner)
+- [ ] write tests
