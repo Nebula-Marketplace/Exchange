@@ -189,7 +189,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetMetadata {} => to_binary(&query::get_metadata(deps)?),
         QueryMsg::GetListed {} => to_binary(&query::get_listed(deps)?),
-        _ => panic!("Unsupported query"),
     }
 }
 
