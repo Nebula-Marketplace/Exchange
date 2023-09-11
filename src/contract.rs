@@ -204,6 +204,7 @@ pub mod query {
             logo_uri: state.logo_uri,
             banner_uri: state.banner_uri,
             supply: state.supply,
+            contract: state.contract
         })
     }
 
