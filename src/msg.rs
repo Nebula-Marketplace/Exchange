@@ -34,7 +34,7 @@ pub enum ExecuteMsg {
     List {
         id: String,
         price: Uint128,
-        expires: i64
+        expires: i128
     },
     Buy { 
         id : String 

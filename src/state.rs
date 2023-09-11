@@ -25,7 +25,7 @@ pub struct Token {
     pub owner: String,
     pub is_listed: bool,
     pub price: Uint128, // 0 if unlisted
-    pub expires: i64, // 0 if unlisted
+    pub expires: i128, // 0 if unlisted
 }
 
 pub const STATE: Item<State> = Item::new("state");

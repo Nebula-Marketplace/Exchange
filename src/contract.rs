@@ -74,7 +74,7 @@ pub mod execute {
         Bank(BankMsg)
     }
 
-    pub fn list(deps: DepsMut, id: String, price: Uint128, expires: i64, owner: Addr) -> Result<Response, ContractError> {
+    pub fn list(deps: DepsMut, id: String, price: Uint128, expires: i128, owner: Addr) -> Result<Response, ContractError> {
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
             state.listed.append(&mut vec![Token {
                 id: id.to_string(),
