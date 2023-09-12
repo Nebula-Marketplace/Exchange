@@ -154,7 +154,8 @@ pub mod execute {
         }
 
         for (i, token) in listed.iter_mut().enumerate() {
-            if token.expires <= env.block.time.seconds() as i64 {
+            // This gets a bit messy, but block.time.seconds is a u64. Timestamps are huge numbers, so we need to convert to u128
+            if token.expires as u128 <= env.block.time.seconds() as u128 {
                 STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
                     state.listed.remove(i);
                     Ok(state)
