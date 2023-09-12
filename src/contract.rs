@@ -16,7 +16,10 @@ use crate::msg::{
     SendTokenMsg, 
     Royalties,
     OwnerOf,
-    Creator
+    Creator,
+    MintingInfo,
+    Rmessage,
+    Revoke,
 };
 use crate::state::{State, STATE, Token};
 
@@ -43,7 +46,7 @@ pub fn instantiate(
             seller_fee_basis_points: msg.basis_points,
             creators: msg.creators
         },
-        owner: _info.sender , // We can leave unchecked as it's been validated
+        owner: _info.sender, // We can leave unchecked as it's been validated
         listed: vec![],
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
@@ -72,7 +75,6 @@ pub fn execute(
 pub mod execute {
     use cosmwasm_std::{Uint128, coins, WasmMsg};
 
-    use crate::msg::{Rmessage, Revoke};
     #[allow(unused_imports)]
     use crate::state;
 
@@ -84,23 +86,28 @@ pub mod execute {
     }
 
     pub fn update_metadata(deps: DepsMut, creators: Option<Vec<Creator>>, description: Option<String>, logo_uri: Option<String>, banner_uri: Option<String>, owner: Addr) -> Result<Response, ContractError> {
-        let mut s = STATE.load(deps.storage)?;
-        if owner != s.owner {
+        let s = STATE.load(deps.storage)?;
+
+        let creator: String = deps.querier.query_wasm_smart(s.contract, &to_binary(&MintingInfo { }).unwrap()).unwrap();
+
+        if owner != creator {
             return Err(ContractError::Unauthorized {});
         }
-        if let Some(_creators) = creators {
-            s.royalties.creators = _creators;
-        }
-        if let Some(_description) = description {
-            s.description = _description;
-        }
-        if let Some(_logo_uri) = logo_uri {
-            s.logo_uri = _logo_uri;
-        }
-        if let Some(_banner_uri) = banner_uri {
-            s.banner_uri = _banner_uri;
-        }
-        STATE.save(deps.storage, &s)?;
+        STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
+            if let Some(_creators) = creators {
+                state.royalties.creators = _creators;
+            }
+            if let Some(_description) = description {
+                state.description = _description;
+            }
+            if let Some(_logo_uri) = logo_uri {
+                state.logo_uri = _logo_uri;
+            }
+            if let Some(_banner_uri) = banner_uri {
+                state.banner_uri = _banner_uri;
+            } 
+            Ok(state)
+        })?;
         Ok(Response::new().add_attribute("action", "update_metadata"))
     }
 
@@ -147,12 +154,12 @@ pub mod execute {
         }
 
         for (i, token) in listed.iter_mut().enumerate() {
-            // if token.expires <= env.block.time.seconds() as i64 {
-            //     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-            //         state.listed.remove(i);
-            //         Ok(state)
-            //     })?;
-            // }
+            if token.expires <= env.block.time.seconds() as i64 {
+                STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
+                    state.listed.remove(i);
+                    Ok(state)
+                })?;
+            }
             if token.id == id {
                 let payment: Uint128 = cw_utils::must_pay(info, "inj").unwrap();
                 if token.price > payment { // need to rework this to include platform fee and royalties

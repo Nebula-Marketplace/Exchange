@@ -30,6 +30,11 @@ pub struct OwnerOf {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct GetApprovals {
+    token_id: String
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct MintingInfo {
 
 }
 
