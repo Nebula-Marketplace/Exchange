@@ -24,6 +24,21 @@ pub struct Royalties {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct OwnerOf {
+    pub token_id: String,
+} 
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct GetApprovals {
+
+}
+
+// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+// pub struct ownerOfWrapper {
+//     pub owner_of: OwnerOf
+// }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Creator {
     pub address: String,
     pub share: i8
@@ -85,6 +100,7 @@ pub struct GetMetadataResponse {
     pub logo_uri: String,
     pub banner_uri: String,
     pub supply: i32,
+    pub contract: String
 }
 
 #[cw_serde]

@@ -7,10 +7,17 @@ use cw2::set_contract_version;
 use cosmwasm_std::WasmMsg::Execute as MsgExecuteContract;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, GetMetadataResponse, InstantiateMsg, QueryMsg, Tmessage, SendTokenMsg};
+use crate::msg::{
+    ExecuteMsg, 
+    GetMetadataResponse, 
+    InstantiateMsg, 
+    QueryMsg, 
+    Tmessage, 
+    SendTokenMsg, 
+    Royalties,
+    OwnerOf
+};
 use crate::state::{State, STATE, Token};
-
-use crate::msg::Royalties;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "Nebula Exchange";
@@ -75,6 +82,17 @@ pub mod execute {
     }
 
     pub fn list(deps: DepsMut, id: String, price: Uint128, expires: i128, owner: Addr) -> Result<Response, ContractError> {
+        let s = STATE.load(deps.storage)?;
+
+        let token_owner: String = deps.querier.query_wasm_smart(
+            &s.contract, 
+            &to_binary(&OwnerOf { token_id: id.clone() }).unwrap()
+        ).unwrap();
+
+        if owner != token_owner {
+            return Err(ContractError::Unauthorized {});
+        }
+
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
             state.listed.append(&mut vec![Token {
                 id: id.to_string(),
@@ -95,6 +113,15 @@ pub mod execute {
         let addresss = &s.contract;
 
         let mut resp = Response::new();
+
+        let token_owner: String = deps.querier.query_wasm_smart(
+            &s.contract, 
+            &to_binary(&OwnerOf { token_id: id.clone() }).unwrap()
+        ).unwrap();
+
+        if info.sender != token_owner {
+            return Err(ContractError::Unauthorized {});
+        }
 
         for (i, token) in listed.iter_mut().enumerate() {
             // if token.expires <= env.block.time.seconds() as i64 {
