@@ -15,7 +15,8 @@ use crate::msg::{
     Tmessage, 
     SendTokenMsg, 
     Royalties,
-    OwnerOf
+    OwnerOf,
+    Creator
 };
 use crate::state::{State, STATE, Token};
 
@@ -42,7 +43,7 @@ pub fn instantiate(
             seller_fee_basis_points: msg.basis_points,
             creators: msg.creators
         },
-        owner: Addr::unchecked("inj1f4psdn7c7ap3aruu5zpex5p9a05k8qd077736v"), // We can leave unchecked as it's been validated
+        owner: _info.sender , // We can leave unchecked as it's been validated
         listed: vec![],
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
@@ -64,6 +65,7 @@ pub fn execute(
         ExecuteMsg::List { id, price, expires } => execute::list(deps, id, price, expires, info.sender),
         ExecuteMsg::Buy { id } => execute::buy(deps, id, &info, env),
         ExecuteMsg::DeList { id } => execute::delist(deps, id, &info, env),
+        ExecuteMsg::UpdateMetadata { creators, description, logo_uri, banner_uri } => execute::update_metadata(deps, creators, description, logo_uri, banner_uri, info.sender),
     }
 }
 
@@ -79,6 +81,27 @@ pub mod execute {
     pub enum Messages {
         Execute(WasmMsg),
         Bank(BankMsg)
+    }
+
+    pub fn update_metadata(deps: DepsMut, creators: Option<Vec<Creator>>, description: Option<String>, logo_uri: Option<String>, banner_uri: Option<String>, owner: Addr) -> Result<Response, ContractError> {
+        let mut s = STATE.load(deps.storage)?;
+        if owner != s.owner {
+            return Err(ContractError::Unauthorized {});
+        }
+        if let Some(_creators) = creators {
+            s.royalties.creators = _creators;
+        }
+        if let Some(_description) = description {
+            s.description = _description;
+        }
+        if let Some(_logo_uri) = logo_uri {
+            s.logo_uri = _logo_uri;
+        }
+        if let Some(_banner_uri) = banner_uri {
+            s.banner_uri = _banner_uri;
+        }
+        STATE.save(deps.storage, &s)?;
+        Ok(Response::new().add_attribute("action", "update_metadata"))
     }
 
     pub fn list(deps: DepsMut, id: String, price: Uint128, expires: i128, owner: Addr) -> Result<Response, ContractError> {

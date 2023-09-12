@@ -56,6 +56,12 @@ pub enum ExecuteMsg {
     },
     DeList {
         id: String
+    },
+    UpdateMetadata {
+        creators: Option<Vec<Creator>>,
+        description: Option<String>,
+        logo_uri: Option<String>,
+        banner_uri: Option<String>,
     }
 }
 
