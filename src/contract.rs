@@ -23,12 +23,16 @@ use crate::msg::{
 };
 use crate::state::{State, STATE, Token};
 
+use serde::{Deserialize, Serialize};
+
 // version info for migration info
 const CONTRACT_NAME: &str = "Nebula Exchange";
 const CONTRACT_VERSION: &str = "0.0.1";
 
-pub struct Test<Response> {
-    pub response: Response,
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct GetOwnerResponse {
+    pub owner: String,
+    pub approvals: Vec<String>,
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -119,14 +123,18 @@ pub mod execute {
     pub fn list(deps: DepsMut, id: String, price: Uint128, expires: i128, owner: Addr) -> Result<Response, ContractError> {
         let s = STATE.load(deps.storage)?;
 
-        // let token_owner: String = deps.querier.query_wasm_smart(
-        //     &s.contract, 
-        //     &to_binary(&OwnerOf { token_id: id.clone() }).unwrap()
-        // ).unwrap();
+        let resp: GetOwnerResponse = deps.querier.query_wasm_smart(
+            &s.contract, 
+            &to_binary(&OwnerOf { token_id: id.clone() }).unwrap()
+        ).unwrap();
 
-        // if owner != token_owner {
-        //     return Err(ContractError::Unauthorized {});
-        // }
+        if owner.as_str() != resp.owner {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        if resp.approvals.len() < 1 {
+            return Err(ContractError::Unauthorized {});
+        }
 
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
             state.listed.append(&mut vec![Token {
