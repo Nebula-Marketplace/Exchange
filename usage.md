@@ -3,7 +3,10 @@ On Inj testnet, our codeid is 2670
 On Inj mainnet, our codeid is [NOT UPLOADED]
 
 # Actions
-This contract at v0.0.1 has the following 3 actions:
+This contract at v0.1.0 has the following 4 actions:
+
+## Adding Collection Metadata after-the-fact
+After instantiation, the metadata may want to be updated for any number of reasons. 
 
 ## Listing tokens
 to list a token, create a messsage list that looks like this:

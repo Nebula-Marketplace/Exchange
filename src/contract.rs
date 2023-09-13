@@ -1,4 +1,4 @@
-use std::vec;
+
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -27,6 +27,10 @@ use crate::state::{State, STATE, Token};
 const CONTRACT_NAME: &str = "Nebula Exchange";
 const CONTRACT_VERSION: &str = "0.0.1";
 
+pub struct Test<Response> {
+    pub response: Response,
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -34,9 +38,10 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+    let contractAddress = msg.contract;
     let state = State {
         collection: msg.collection,
-        contract: msg.contract,
+        contract: contractAddress.clone(),
         symbol: msg.symbol,
         description: msg.description,
         logo_uri: msg.logo_uri,
@@ -46,7 +51,7 @@ pub fn instantiate(
             seller_fee_basis_points: msg.basis_points,
             creators: msg.creators
         },
-        owner: _info.sender, // We can leave unchecked as it's been validated
+        owner: deps.querier.query_wasm_contract_info(contractAddress).unwrap().creator, 
         listed: vec![],
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
@@ -88,9 +93,9 @@ pub mod execute {
     pub fn update_metadata(deps: DepsMut, creators: Option<Vec<Creator>>, description: Option<String>, logo_uri: Option<String>, banner_uri: Option<String>, owner: Addr) -> Result<Response, ContractError> {
         let s = STATE.load(deps.storage)?;
 
-        let creator: String = deps.querier.query_wasm_smart(s.contract, &to_binary(&MintingInfo { }).unwrap()).unwrap();
+        let creator = deps.querier.query_wasm_contract_info(s.contract).unwrap().creator;
 
-        if owner != creator {
+        if owner.as_str() != creator {
             return Err(ContractError::Unauthorized {});
         }
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
@@ -114,14 +119,14 @@ pub mod execute {
     pub fn list(deps: DepsMut, id: String, price: Uint128, expires: i128, owner: Addr) -> Result<Response, ContractError> {
         let s = STATE.load(deps.storage)?;
 
-        let token_owner: String = deps.querier.query_wasm_smart(
-            &s.contract, 
-            &to_binary(&OwnerOf { token_id: id.clone() }).unwrap()
-        ).unwrap();
+        // let token_owner: String = deps.querier.query_wasm_smart(
+        //     &s.contract, 
+        //     &to_binary(&OwnerOf { token_id: id.clone() }).unwrap()
+        // ).unwrap();
 
-        if owner != token_owner {
-            return Err(ContractError::Unauthorized {});
-        }
+        // if owner != token_owner {
+        //     return Err(ContractError::Unauthorized {});
+        // }
 
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
             state.listed.append(&mut vec![Token {
@@ -143,15 +148,6 @@ pub mod execute {
         let addresss = &s.contract;
 
         let mut resp = Response::new();
-
-        let token_owner: String = deps.querier.query_wasm_smart(
-            &s.contract, 
-            &to_binary(&OwnerOf { token_id: id.clone() }).unwrap()
-        ).unwrap();
-
-        if info.sender != token_owner {
-            return Err(ContractError::Unauthorized {});
-        }
 
         for (i, token) in listed.iter_mut().enumerate() {
             // This gets a bit messy, but block.time.seconds is a u64. Timestamps are huge numbers, so we need to convert to u128

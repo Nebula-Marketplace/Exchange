@@ -14,7 +14,7 @@ pub struct State {
     pub logo_uri: String,
     pub banner_uri: String,
     pub supply: i32,
-    pub owner: Addr,
+    pub owner: String,
     pub royalties: Royalties,
     pub listed: Vec<Token>, 
 }
