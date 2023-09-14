@@ -118,7 +118,12 @@ pub struct GetMetadataResponse {
     pub logo_uri: String,
     pub banner_uri: String,
     pub supply: i32,
-    pub contract: String
+    pub contract: String,
+    pub website: String,
+    pub contact: String,
+    pub twitter: String,
+    pub telegram: String,
+    pub discord: String,
 }
 
 #[cw_serde]

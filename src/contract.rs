@@ -332,7 +332,12 @@ pub mod query {
             logo_uri: state.logo_uri,
             banner_uri: state.banner_uri,
             supply: state.supply,
-            contract: state.contract
+            contract: state.contract,
+            contact: state.contact,
+            discord: state.discord,
+            twitter: state.twitter,
+            telegram: state.telegram,
+            website: state.website
         })
     }
 
