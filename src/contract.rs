@@ -139,7 +139,7 @@ pub mod execute {
                 twitter: Option<String>,
                 telegram: Option<String>,
                 discord: Option<String>,
-        ) -> Result<Response, ContractError> {
+    ) -> Result<Response, ContractError> {
         let s = STATE.load(deps.storage)?;
 
         let creator = deps.querier.query_wasm_contract_info(s.contract).unwrap().creator;
