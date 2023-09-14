@@ -17,7 +17,7 @@ use crate::msg::{
     Royalties,
     OwnerOf,
     Creator,
-    MintingInfo,
+    // MintingInfo,
     Rmessage,
     Revoke,
 };
@@ -77,7 +77,7 @@ pub fn execute(
         ExecuteMsg::List { id, price, expires } => execute::list(deps, id, price, expires, info.sender),
         ExecuteMsg::Buy { id } => execute::buy(deps, id, &info, env),
         ExecuteMsg::DeList { id } => execute::delist(deps, id, &info, env),
-        ExecuteMsg::UpdateMetadata { creators, description, logo_uri, banner_uri } => execute::update_metadata(deps, creators, description, logo_uri, banner_uri, info.sender),
+        ExecuteMsg::UpdateMetadata { creators, description, logo_uri, banner_uri, basis_points } => execute::update_metadata(deps, creators, description, logo_uri, banner_uri, basis_points, info.sender),
     }
 }
 
@@ -94,7 +94,7 @@ pub mod execute {
         Bank(BankMsg)
     }
 
-    pub fn update_metadata(deps: DepsMut, creators: Option<Vec<Creator>>, description: Option<String>, logo_uri: Option<String>, banner_uri: Option<String>, owner: Addr) -> Result<Response, ContractError> {
+    pub fn update_metadata(deps: DepsMut, creators: Option<Vec<Creator>>, description: Option<String>, logo_uri: Option<String>, banner_uri: Option<String>, basis_points: Option<u16>, owner: Addr) -> Result<Response, ContractError> {
         let s = STATE.load(deps.storage)?;
 
         let creator = deps.querier.query_wasm_contract_info(s.contract).unwrap().creator;
@@ -115,6 +115,9 @@ pub mod execute {
             if let Some(_banner_uri) = banner_uri {
                 state.banner_uri = _banner_uri;
             } 
+            if let Some(_basis_points) = basis_points {
+                state.royalties.seller_fee_basis_points = _basis_points as i8;
+            }
             Ok(state)
         })?;
         Ok(Response::new().add_attribute("action", "update_metadata"))

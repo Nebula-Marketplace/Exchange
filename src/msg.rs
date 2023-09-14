@@ -67,6 +67,7 @@ pub enum ExecuteMsg {
         description: Option<String>,
         logo_uri: Option<String>,
         banner_uri: Option<String>,
+        basis_points: Option<u16>
     }
 }
 

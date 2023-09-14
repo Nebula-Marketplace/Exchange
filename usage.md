@@ -7,6 +7,26 @@ This contract at v0.1.0 has the following 4 actions:
 
 ## Adding Collection Metadata after-the-fact
 After instantiation, the metadata may want to be updated for any number of reasons. 
+You can update that like this:
+```js
+Messages: [
+    MsgExecuteContract {
+        sender: "Collection Owner",
+        contract: "exchange_contract",
+        funds: [],
+        msg: {
+            UpdateMetadata: {
+                banner_uri: null | String,
+                avatar_uri: null | String,
+                description: null | String,
+                basis_points: null | Int, // 100 == 1% royalty
+                creators: null | List[Object {share: Int, address: String}]
+            }
+        }
+    }
+]
+```
+All fields are required, but can be set as null. 
 
 ## Listing tokens
 to list a token, create a messsage list that looks like this:
