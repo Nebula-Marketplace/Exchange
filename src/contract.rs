@@ -57,6 +57,11 @@ pub fn instantiate(
         },
         owner: deps.querier.query_wasm_contract_info(contractAddress).unwrap().creator, 
         listed: vec![],
+        contact: "".to_string(), // updated later
+        discord: "".to_string(),
+        twitter: "".to_string(),
+        telegram: "".to_string(),
+        website: "".to_string()
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     STATE.save(deps.storage, &state)?;
@@ -77,7 +82,33 @@ pub fn execute(
         ExecuteMsg::List { id, price, expires } => execute::list(deps, id, price, expires, info.sender),
         ExecuteMsg::Buy { id } => execute::buy(deps, id, &info, env),
         ExecuteMsg::DeList { id } => execute::delist(deps, id, &info, env),
-        ExecuteMsg::UpdateMetadata { creators, description, logo_uri, banner_uri, basis_points } => execute::update_metadata(deps, creators, description, logo_uri, banner_uri, basis_points, info.sender),
+        ExecuteMsg::UpdateMetadata {
+            creators,
+            description, 
+            logo_uri, 
+            banner_uri, 
+            basis_points,
+            collection,
+            website,
+            contact,
+            twitter,
+            telegram,
+            discord, 
+        } => execute::update_metadata(
+                    deps, 
+                    creators, 
+                    description, 
+                    logo_uri, 
+                    banner_uri, 
+                    basis_points, 
+                    info.sender,
+                    collection,
+                    website,
+                    contact,
+                    twitter,
+                    telegram,
+                    discord,
+                ),
     }
 }
 
@@ -94,7 +125,21 @@ pub mod execute {
         Bank(BankMsg)
     }
 
-    pub fn update_metadata(deps: DepsMut, creators: Option<Vec<Creator>>, description: Option<String>, logo_uri: Option<String>, banner_uri: Option<String>, basis_points: Option<u16>, owner: Addr) -> Result<Response, ContractError> {
+    pub fn update_metadata(
+                deps: DepsMut, 
+                creators: Option<Vec<Creator>>, 
+                description: Option<String>, 
+                logo_uri: Option<String>, 
+                banner_uri: Option<String>, 
+                basis_points: Option<u16>, 
+                owner: Addr,
+                collection: Option<String>,
+                website: Option<String>,
+                contact: Option<String>,
+                twitter: Option<String>,
+                telegram: Option<String>,
+                discord: Option<String>,
+        ) -> Result<Response, ContractError> {
         let s = STATE.load(deps.storage)?;
 
         let creator = deps.querier.query_wasm_contract_info(s.contract).unwrap().creator;
@@ -117,6 +162,24 @@ pub mod execute {
             } 
             if let Some(_basis_points) = basis_points {
                 state.royalties.seller_fee_basis_points = _basis_points as i8;
+            }
+            if let Some(_collection) = collection {
+                state.collection = _collection;
+            }
+            if let Some(_website) = website {
+                state.website = _website;
+            }
+            if let Some(_contact) = contact {
+                state.contact = _contact;
+            }
+            if let Some(_twitter) = twitter {
+                state.twitter = _twitter;
+            }
+            if let Some(_telegram) = telegram {
+                state.telegram = _telegram;
+            }
+            if let Some(_discord) = discord {
+                state.discord = _discord;
             }
             Ok(state)
         })?;

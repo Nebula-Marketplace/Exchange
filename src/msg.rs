@@ -64,6 +64,12 @@ pub enum ExecuteMsg {
     },
     UpdateMetadata {
         creators: Option<Vec<Creator>>,
+        collection: Option<String>,
+        website: Option<String>,
+        contact: Option<String>,
+        twitter: Option<String>,
+        telegram: Option<String>,
+        discord: Option<String>,
         description: Option<String>,
         logo_uri: Option<String>,
         banner_uri: Option<String>,

@@ -17,6 +17,11 @@ pub struct State {
     pub owner: String,
     pub royalties: Royalties,
     pub listed: Vec<Token>, 
+    pub contact: String,
+    pub discord: String,
+    pub twitter: String,
+    pub telegram: String,
+    pub website: String
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Eq)]
