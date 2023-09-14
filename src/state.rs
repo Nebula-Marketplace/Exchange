@@ -7,6 +7,7 @@ use cw_storage_plus::Item;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct State {
+    pub flagged: bool,
     pub collection: String,
     pub contract: String,
     pub description: String,

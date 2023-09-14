@@ -51,6 +51,7 @@ pub struct Creator {
 
 #[cw_serde]
 pub enum ExecuteMsg {
+    Flag { enabled: bool },
     List {
         id: String,
         price: Uint128,
@@ -112,6 +113,7 @@ pub enum QueryMsg {
 // We define a custom struct for each query response
 #[cw_serde]
 pub struct GetMetadataResponse {
+    pub flagged: bool,
     pub collection: String,
     pub description: String,
     pub symbol: String,

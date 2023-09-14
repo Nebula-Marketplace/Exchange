@@ -44,6 +44,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     let contractAddress = msg.contract;
     let state = State {
+        flagged: false,
         collection: msg.collection,
         contract: contractAddress.clone(),
         symbol: msg.symbol,
@@ -82,6 +83,7 @@ pub fn execute(
         ExecuteMsg::List { id, price, expires } => execute::list(deps, id, price, expires, info.sender),
         ExecuteMsg::Buy { id } => execute::buy(deps, id, &info, env),
         ExecuteMsg::DeList { id } => execute::delist(deps, id, &info, env),
+        ExecuteMsg::Flag { enabled } => execute::flag(enabled, deps),
         ExecuteMsg::UpdateMetadata {
             creators,
             description, 
@@ -123,6 +125,16 @@ pub mod execute {
     pub enum Messages {
         Execute(WasmMsg),
         Bank(BankMsg)
+    }
+
+    pub fn flag(enabled: bool, deps: DepsMut) -> Result<Response, ContractError> {
+        let s = STATE.load(deps.storage).unwrap();
+        STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
+            state.flagged = enabled;
+            Ok(state)
+        }).unwrap();
+
+        Ok(Response::new())
     }
 
     pub fn update_metadata(
@@ -326,6 +338,7 @@ pub mod query {
     pub fn get_metadata(deps: Deps) -> StdResult<GetMetadataResponse> {
         let state = STATE.load(deps.storage)?;
         Ok(GetMetadataResponse {
+            flagged: state.flagged,
             collection: state.collection,
             symbol: state.symbol,
             description: state.description,
