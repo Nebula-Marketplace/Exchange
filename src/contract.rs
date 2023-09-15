@@ -128,7 +128,6 @@ pub mod execute {
     }
 
     pub fn flag(enabled: bool, deps: DepsMut) -> Result<Response, ContractError> {
-        let s = STATE.load(deps.storage).unwrap();
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
             state.flagged = enabled;
             Ok(state)
