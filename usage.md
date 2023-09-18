@@ -1,6 +1,6 @@
 ## Instantiating
 On Inj testnet, our codeid is 2670
-On Inj mainnet, our codeid is [NOT UPLOADED]
+On Inj mainnet, our codeid is 116
 
 # Actions
 This contract at v0.1.0 has the following 4 actions:
