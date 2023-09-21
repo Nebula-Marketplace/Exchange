@@ -19,7 +19,7 @@ Messages: [
                 banner_uri: null | String,
                 avatar_uri: null | String,
                 description: null | String,
-                basis_points: null | Int, // 100 == 1% royalty
+                basis_points: null | number, // 100 == 1% royalty
                 creators: null | List[Object {share: Int, address: String}]
             }
         }
