@@ -2,7 +2,7 @@
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Addr, BankMsg};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Addr, BankMsg, Decimal};
 use cw2::set_contract_version;
 use cosmwasm_std::WasmMsg::Execute as MsgExecuteContract;
 
@@ -115,6 +115,8 @@ pub fn execute(
 }
 
 pub mod execute {
+    use std::str::FromStr;
+
     use cosmwasm_std::{Uint128, coins, WasmMsg};
 
     #[allow(unused_imports)]
@@ -244,30 +246,32 @@ pub mod execute {
             }
             if token.id == id {
                 let payment: Uint128 = cw_utils::must_pay(info, "inj").unwrap();
-                if token.price > payment { // need to rework this to include platform fee and royalties
+                let royalty_rate: Decimal = Decimal::from_ratio(s.royalties.seller_fee_basis_points as u128, 10_000 as u128);
+                let royalty_amount = payment * royalty_rate;
+                let mut payout = payment - royalty_amount;
+                payout = payout - (payout * Decimal::from_str("0.03").unwrap()); // 2% platform fee
+                if (token.price + royalty_amount + (token.price * Decimal::from_str("0.03").unwrap())) > payment { // need to rework this to include platform fee and royalties
                     return Err(ContractError::InsufficientFunds {});
                 }
                 else {
                     // Execute send_token(info.sender, token.id) from the contract
 
                     // create vec of messages; bankMsgSend to creators, bankMsgSend to fee wallet, bankMsgSend to owner, and send_token to buyer
-
                     resp = resp.add_messages(s.royalties.creators.iter().map(|creator| {
                         let creator_addr = Addr::unchecked(&creator.address);
-                        let creator_payment = u128::from(token.price) * u128::from(Uint128::from((creator.share as i16 / 10_000) as u8));
-                        let creator_msg = BankMsg::Send {    
+                        return BankMsg::Send {    
                             to_address: creator_addr.into(), 
-                            amount: coins(creator_payment, "inj"),
+                            amount: coins((royalty_amount * Decimal::percent(creator.share as u64)).u128(), "inj"),
                         };
-                        creator_msg
                     }).rev())
-                    .add_messages(vec![BankMsg::Send {  
+                    .add_message(BankMsg::Send {  
                         to_address: "inj1f4psdn7c7ap3aruu5zpex5p9a05k8qd077736v".into(),
                         amount: coins(u128::from(token.price) * 0.02 as u128, "inj"),
-                    }])
+                    })
+                    .add_message(BankMsg::Send { to_address: String::from(&token.owner), amount: coins(payout.u128(), "inj") })
                     .add_messages(vec![MsgExecuteContract {
                        contract_addr: addresss.into(),
-                       msg: to_binary(& Tmessage { transfer_nft: SendTokenMsg { recipient: info.sender.to_string(), token_id: token.id.to_string() } }).unwrap(),
+                       msg: to_binary(&Tmessage { transfer_nft: SendTokenMsg { recipient: info.sender.to_string(), token_id: token.id.to_string() } }).unwrap(),
                        funds: vec![],
                     }]);
 
