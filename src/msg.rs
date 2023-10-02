@@ -57,7 +57,7 @@ pub enum ExecuteMsg {
         price: Uint128,
         expires: i128
     },
-    Buy { 
+    Buy {
         id : String 
     },
     DeList {

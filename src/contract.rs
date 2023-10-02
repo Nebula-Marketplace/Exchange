@@ -199,12 +199,17 @@ pub mod execute {
         Ok(Response::new().add_attribute("action", "update_metadata"))
     }
 
+    #[derive(Debug, Serialize, Deserialize)]
+    struct QueryWrapper {
+        pub owner_of: OwnerOf
+    }
+
     pub fn list(deps: DepsMut, id: String, price: Uint128, expires: i128, owner: Addr) -> Result<Response, ContractError> {
         let s = STATE.load(deps.storage)?;
 
         let resp: GetOwnerResponse = deps.querier.query_wasm_smart(
             &s.contract, 
-            &to_binary(&OwnerOf { token_id: id.clone() }).unwrap()
+            &to_binary(&QueryWrapper { owner_of: OwnerOf { token_id: id.clone() }}).unwrap()
         ).unwrap();
 
         if owner.as_str() != resp.owner {
