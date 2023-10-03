@@ -252,7 +252,7 @@ pub mod execute {
                 let royalty_rate: Decimal = Decimal::from_ratio(s.royalties.seller_fee_basis_points as u128, 10_000 as u128);
                 let royalty_amount = payment * royalty_rate;
                 let mut payout = payment - royalty_amount;
-                payout = payout - (payout * Decimal::percent(3)); // 3% platform fee
+                payout = payout - (payout * Decimal::percent(3)) - Uint128::from(1000000u128); // 3% platform fee
                 if (token.price + royalty_amount) > payment { // need to rework this to include platform fee and royalties
                     return Err(ContractError::InsufficientFunds {});
                 }
