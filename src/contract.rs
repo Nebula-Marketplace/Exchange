@@ -209,7 +209,7 @@ pub mod execute {
 
         let resp: GetOwnerResponse = deps.querier.query_wasm_smart(
             &s.contract, 
-            &to_binary(&QueryWrapper { owner_of: OwnerOf { token_id: id.clone() }}).unwrap()
+            &QueryWrapper { owner_of: OwnerOf { token_id: id.clone() }}
         ).unwrap();
 
         if owner.as_str() != resp.owner {
