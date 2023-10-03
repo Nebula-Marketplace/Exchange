@@ -1,5 +1,3 @@
-
-
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Addr, BankMsg, Decimal};
@@ -32,7 +30,12 @@ const CONTRACT_VERSION: &str = "0.0.1";
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetOwnerResponse {
     pub owner: String,
-    pub approvals: Vec<String>,
+    pub approvals: Vec<Approval>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct Approval {
+    spender: String
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
