@@ -1,5 +1,6 @@
 ## Instantiating
-On Inj testnet, our codeid is 2770
+On Inj testnet, our codeid is 2949
+
 On Inj mainnet, our codeid is 116
 
 # Actions
