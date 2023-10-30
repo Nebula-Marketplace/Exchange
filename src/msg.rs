@@ -19,7 +19,7 @@ pub struct InstantiateMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Royalties {
-    pub seller_fee_basis_points: i8,
+    pub seller_fee_basis_points: u16,
     pub creators: Vec<Creator>,
 }
 
