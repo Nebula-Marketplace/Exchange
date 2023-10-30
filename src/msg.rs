@@ -14,7 +14,7 @@ pub struct InstantiateMsg {
     pub banner_uri: String,
     pub supply: i32,
     pub creators: Vec<Creator>,
-    pub basis_points: i8, // 100 basis points = 1% of list price
+    pub basis_points: u16, // 100 basis points = 1% of list price
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
