@@ -204,31 +204,38 @@ pub mod execute {
 
     pub fn list(deps: DepsMut, id: String, price: Uint128, expires: i128, owner: Addr) -> Result<Response, ContractError> {
         let s = STATE.load(deps.storage)?;
-
+    
         let resp: GetOwnerResponse = deps.querier.query_wasm_smart(
             &s.contract, 
             &QueryWrapper { owner_of: OwnerOf { token_id: id.clone() }}
         ).unwrap();
-
+    
         if owner.as_str() != resp.owner {
             return Err(ContractError::Unauthorized {});
         }
-
+    
         if resp.approvals.len() < 1 {
             return Err(ContractError::Unauthorized {});
         }
-
+    
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-            state.listed.append(&mut vec![Token {
-                id: id.to_string(),
-                owner: owner.to_string(), // leaves us with options
-                is_listed: true,
-                price: price,
-                expires: expires,
-            }]);
+            if let Some(token) = state.listed.iter_mut().find(|token| token.id == id) {
+                // If the token with the given id already exists, update the price and expiration
+                token.price = price;
+                token.expires = expires;
+            } else {
+                // If the token with the given id doesn't exist, add a new token to the `listed` vector
+                state.listed.push(Token {
+                    id: id.to_string(),
+                    owner: owner.to_string(),
+                    is_listed: true,
+                    price: price,
+                    expires: expires,
+                });
+            }
             Ok(state)
         })?;
-
+    
         Ok(Response::new().add_attribute("action", "increment"))
     }
 
