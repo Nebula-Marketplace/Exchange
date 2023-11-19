@@ -48,4 +48,5 @@ thiserror = { version = "1.0.31" }
 cw-utils = "1.0.1"
 
 [dev-dependencies]
-cw-multi-test = "0.16.5"
+cw-multi-test = "0.18.0"
+nft_multi_test = { git = "https://github.com/Nebula-Marketplace/NftMultitest" }

@@ -17,6 +17,7 @@ use crate::msg::{
     Creator,
 };
 use crate::state::{State, STATE, Token};
+use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
@@ -33,6 +34,11 @@ pub struct GetOwnerResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Approval {
     spender: String
+}
+
+fn check_duplicate(list: &[Token], target_id: &String) -> Option<usize> {
+    let id_index_map: HashMap<_, _> = list.iter().enumerate().map(|(i, item)| (item.id.clone(), i)).collect();
+    id_index_map.get(target_id).cloned()
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -217,6 +223,11 @@ pub mod execute {
         if resp.approvals.len() < 1 {
             return Err(ContractError::Unauthorized {});
         }
+
+        let dup = check_duplicate(&s.listed, &id);
+        if dup.is_some() {
+            return Err(ContractError::Unauthorized {});
+        }
     
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
             if let Some(token) = state.listed.iter_mut().find(|token| token.id == id) {
@@ -233,6 +244,7 @@ pub mod execute {
                     expires: expires,
                 });
             }
+            state.listed.sort_by_key(|i| i.price.u128());
             Ok(state)
         })?;
     
@@ -287,8 +299,10 @@ pub mod execute {
 
                     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
                         state.listed.remove(i);
+                        state.listed.sort_by_key(|i| i.price.u128());
                         Ok(state)
                     })?;
+                    break;
                 }
             }
         }
@@ -296,16 +310,23 @@ pub mod execute {
     }
 
     pub fn delist(deps: DepsMut, id: String, info: &MessageInfo, _env: Env) -> Result<Response, ContractError> {
-        let mut s = STATE.load(deps.storage)?;
+        let s = STATE.load(deps.storage)?;
 
-        for (i, _token) in s.listed.iter_mut().enumerate() {
-            if _token.id == id && &_token.owner == &info.sender.to_string() {
-                STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-                    state.listed.remove(i);
-                    Ok(state)
-                })?;
-            }
-        } 
+        let index = check_duplicate(&s.listed, &id);
+
+        if info.sender != s.listed[index.expect("index is none")].owner {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        if index.is_none() {
+            return Err(ContractError::NotFound {});
+        }
+
+        STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
+            state.listed.remove(index.expect("index is none"));
+            state.listed.sort_by_key(|i| i.price.u128());
+            Ok(state)
+        })?;
 
         return Ok(
             Response::new()
