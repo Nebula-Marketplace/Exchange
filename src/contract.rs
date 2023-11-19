@@ -178,7 +178,7 @@ pub mod execute {
                 state.banner_uri = _banner_uri;
             } 
             if let Some(_basis_points) = basis_points {
-                state.royalties.seller_fee_basis_points = _basis_points as u16;
+                state.royalties.seller_fee_basis_points = _basis_points as u32;
             }
             if let Some(_collection) = collection {
                 state.collection = _collection;
