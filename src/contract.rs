@@ -252,8 +252,7 @@ pub mod execute {
     }
 
     pub fn buy(deps: DepsMut, id: String, info: &MessageInfo, _env: Env) -> Result<Response, ContractError> {
-        let s = STATE.load(deps.storage)?;
-        let mut listed = s.listed;
+        let mut s = STATE.load(deps.storage)?;
         let address = &s.contract;
 
         let mut resp = Response::new();
