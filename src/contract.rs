@@ -258,7 +258,7 @@ pub mod execute {
 
         let mut resp = Response::new();
 
-        for (i, token) in listed.iter_mut().enumerate() {
+        for (i, token) in s.listed.iter_mut().enumerate() {
             // This gets a bit messy, but block.time.seconds is a u64. Timestamps are huge numbers, so we need to convert to u128
             // if token.expires as u128 <= env.block.time.seconds() as u128 {
             //     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
