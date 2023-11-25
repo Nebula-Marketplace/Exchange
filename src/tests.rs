@@ -118,7 +118,12 @@ fn list() {
 
 #[test]
 fn buy() {
-    let mut app = App::default();
+    let mut app = App::new(|router, _, storage| {
+        router
+            .bank
+            .init_balance(storage, &Addr::unchecked("buyer"), coins(2010000, "inj"))
+            .unwrap()
+    });
 
     let code = ContractWrapper::new(execute, instantiate, query);
     let code_id = app.store_code(Box::new(code));
